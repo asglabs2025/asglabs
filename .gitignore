@@ -1,0 +1,13 @@
+# Terraform local directories
+.terraform/
+
+# Terraform state files
+*.tfstate
+*.tfstate.backup
+
+# Terraform variable files (if you want to keep secrets out of Git)
+*.tfvars
+
+# Crash logs and lock file
+crash.log
+.terraform.lock.hcl
