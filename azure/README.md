@@ -27,21 +27,22 @@ terraform/azure/
 │   ├── resource-group/       # Resource group creation
 │   └── vm/                   # Virtual machine module
 └── README.md
-
+```
 ---
 
 ## Usage
 
 Run Terraform commands from the desired environment folder (e.g., dev):
-
+```
 cd terraform/azure/environments/dev
 
 terraform init
 terraform plan -var-file="terraform.tfvars"
 terraform apply -var-file="terraform.tfvars"
-
+```
 
 ## Terraform.tfvars example:
+```
 default_tags = {
   owner      = "your-name"
   managed_by = "terraform"
@@ -75,7 +76,7 @@ image_publisher = "Canonical"
 image_offer     = "UbuntuServer"
 image_sku       = "18.04-LTS"
 image_version   = "latest"
-
+```
 ---
 # Modules Overview
 
