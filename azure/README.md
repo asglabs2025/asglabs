@@ -12,21 +12,21 @@ This repository provides a structured approach to managing Azure infrastructure 
 
 ## Repository Structure
 
+```text
 terraform/azure/
 ├── environments/
-│ └── dev/
-│ ├── main.tf # Environment-specific resources using modules
-│ ├── variables.tf # Input variables for the environment
-│ ├── terraform.tfvars # Environment-specific values
-│ ├── outputs.tf # Environment-specific outputs
-│ └── backend.tf # Remote state configuration (Azure Storage)
+│   └── dev/
+│       ├── main.tf           # Environment-specific resources using modules
+│       ├── variables.tf      # Input variables for the environment
+│       ├── terraform.tfvars  # Environment-specific values
+│       ├── outputs.tf        # Environment-specific outputs
+│       └── backend.tf        # Remote state configuration (Azure Storage)
 ├── modules/
-│ ├── network/ # VNet, subnets, NSGs
-│ ├── nic/ # Network interfaces
-│ ├── resource-group/ # Resource group creation
-│ └── vm/ # Virtual machine module
+│   ├── network/              # VNet, subnets, NSGs
+│   ├── nic/                  # Network interfaces
+│   ├── resource-group/       # Resource group creation
+│   └── vm/                   # Virtual machine module
 └── README.md
-
 
 ---
 
@@ -42,9 +42,6 @@ terraform apply -var-file="terraform.tfvars"
 
 
 ## Terraform.tfvars example:
-# -----
-# Tags
-# -----
 default_tags = {
   owner      = "your-name"
   managed_by = "terraform"
