@@ -1,0 +1,139 @@
+---
+- name: Debian OS patching and logging
+  hosts: debian
+  become: yes
+  gather_facts: yes
+
+  vars:
+    log_dir: "~/git/homelab-infra-priv/ansible/logs/debian"
+
+  pre_tasks:
+    - name: Generate shared run ID
+      ansible.builtin.set_fact:
+        shared_run_id: "{{ lookup('pipe', 'date +%Y%m%dT%H%M%S') }}"
+      delegate_to: localhost
+      run_once: true
+
+    - name: Ensure log directory exists
+      ansible.builtin.file:
+        path: "{{ log_dir }}"
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+      run_once: true
+      become: false
+
+    - name: Set log file path
+      ansible.builtin.set_fact:
+        log_file: "{{ log_dir }}/debian_patch_{{ hostvars['localhost']['shared_run_id'] }}.log"
+
+    - name: Ensure log file exists
+      ansible.builtin.file:
+        path: "{{ log_file }}"
+        state: touch
+        mode: '0644'
+      delegate_to: localhost
+      become: false
+
+    - name: Log start of patching
+      ansible.builtin.lineinfile:
+        path: "{{ log_file }}"
+        line: "[{{ ansible_date_time.iso8601 }}] Starting Debian patch for {{ inventory_hostname }}"
+      delegate_to: localhost
+      become: false
+
+    - name: CVE scan before patching
+      ansible.builtin.shell: apt list --upgradable
+      register: cve_before
+      changed_when: false
+
+    - name: Log CVE scan before patching
+      ansible.builtin.lineinfile:
+        path: "{{ log_file }}"
+        line: "[{{ ansible_date_time.iso8601 }}] {{ inventory_hostname }} CVE before: {{ cve_before.stdout | replace('\n','; ') }}"
+      delegate_to: localhost
+      become: false
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+      register: update_result
+
+    - name: Log apt cache update
+      ansible.builtin.lineinfile:
+        path: "{{ log_file }}"
+        line: "[{{ ansible_date_time.iso8601 }}] {{ inventory_hostname }} updated apt cache. Changed: {{ update_result.changed }}"
+      delegate_to: localhost
+      become: false
+
+    - name: Upgrade system packages (dist-upgrade)
+      ansible.builtin.apt:
+        upgrade: dist
+      register: upgrade_result
+
+    - name: Log upgrade result
+      ansible.builtin.lineinfile:
+        path: "{{ log_file }}"
+        line: "[{{ ansible_date_time.iso8601 }}] {{ inventory_hostname }} upgraded. Changed: {{ upgrade_result.changed }}"
+      delegate_to: localhost
+      become: false
+
+    - name: CVE scan after patching
+      ansible.builtin.shell: apt list --upgradable
+      register: cve_after
+      changed_when: false
+
+    - name: Log CVE scan after patching
+      ansible.builtin.lineinfile:
+        path: "{{ log_file }}"
+        line: "[{{ ansible_date_time.iso8601 }}] {{ inventory_hostname }} CVE after: {{ cve_after.stdout | replace('\n','; ') }}"
+      delegate_to: localhost
+      become: false
+
+    - name: Autoremove unused packages
+      ansible.builtin.apt:
+        autoremove: yes
+      register: autoremove_result
+
+    - name: Log autoremove result
+      ansible.builtin.lineinfile:
+        path: "{{ log_file }}"
+        line: "[{{ ansible_date_time.iso8601 }}] {{ inventory_hostname }} autoremove. Changed: {{ autoremove_result.changed }}"
+      delegate_to: localhost
+      become: false
+
+    - name: Clean apt cache
+      ansible.builtin.apt:
+        autoclean: yes
+      register: autoclean_result
+
+    - name: Log autoclean result
+      ansible.builtin.lineinfile:
+        path: "{{ log_file }}"
+        line: "[{{ ansible_date_time.iso8601 }}] {{ inventory_hostname }} autoclean. Changed: {{ autoclean_result.changed }}"
+      delegate_to: localhost
+      become: false
+
+    - name: Reboot if needed
+      ansible.builtin.reboot:
+        msg: "Rebooting after patching"
+        connect_timeout: 5
+        reboot_timeout: 600
+        post_reboot_delay: 30
+      when: upgrade_result.changed
+
+    - name: Log reboot event
+      ansible.builtin.lineinfile:
+        path: "{{ log_file }}"
+        line: "[{{ ansible_date_time.iso8601 }}] {{ inventory_hostname }} rebooted."
+      when: upgrade_result.changed
+      delegate_to: localhost
+      become: false
+
+    - name: Log patch summary
+      ansible.builtin.lineinfile:
+        path: "{{ log_file }}"
+        line: "[{{ ansible_date_time.iso8601 }}] ✅ {{ inventory_hostname }} Debian patch completed. Packages changed: {{ upgrade_result.changed }}"
+      delegate_to: localhost
+      become: false
