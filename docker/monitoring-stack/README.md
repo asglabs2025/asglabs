@@ -34,5 +34,3 @@ This repository contains a **containerized observability stack** for monitoring 
 ```
 ---
 
-## Usage
-
