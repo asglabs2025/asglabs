@@ -1,0 +1,6 @@
+- targets:
+  - "192.168.0.38:9100"   # target 1
+  - "192.168.0.42:9100"   # target 2
+  labels:
+    job: "node_exporter"
+

@@ -1,0 +1,72 @@
+version: '3'
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    user: root
+    ports:
+      - '9090:9090'
+    volumes:
+      - /opt/monitoring/prometheus:/etc/prometheus
+      - /opt/monitoring/prometheus-data:/prometheus
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    hostname: grafana.domain.co.uk
+    user: root
+    ports:
+      - '3000:3000'
+    volumes:
+      - /opt/monitoring/grafana:/var/lib/grafana
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=yourpasswordhere
+      - GF_PLUGINS_PREINSTALL=grafana-clock-panel,natel-discrete-panel,grafana-piechart-panel
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=mail.xxxx.co.uk:25
+      - GF_SMTP_USER=user@domain.co.uk
+      - GF_SMTP_PASSWORD=xxxxxxxxxxxx
+      - GF_SMTP_FROM_ADDRESS=user@domain.co.uk
+      - GF_SMTP_FROM_NAME=Grafana Alerts
+      - GF_SMTP_SKIP_VERIFY=false
+      - GF_LOG_LEVEL=debug
+    networks:
+      - monitoring
+    extra_hosts:
+      - "mail.domain.co.uk:public.ip.address.here"
+
+  unpoller:
+    image: ghcr.io/unpoller/unpoller:latest
+    restart: unless-stopped
+    user: root
+    container_name: unpoller
+    ports:
+      - '9130:9130'
+    volumes:
+      - /opt/monitoring/unpoller:/unpoller
+    environment:
+      - UP_INFLUXDB_DISABLE=true
+      - UP_POLLER_DEBUG=false
+      - UP_UNIFI_DYNAMIC=false
+      - UP_PROMETHEUS_HTTP_LISTEN=0.0.0.0:9130
+      - UP_PROMETHEUS_NAMESPACE=unpoller
+      - UP_UNIFI_CONTROLLER_0_PASS=unifi_password_here
+      - UP_UNIFI_CONTROLLER_0_SAVE_ALARMS=true
+      - UP_UNIFI_CONTROLLER_0_SAVE_ANOMALIES=true
+      - UP_UNIFI_CONTROLLER_0_SAVE_DPI=true
+      - UP_UNIFI_CONTROLLER_0_SAVE_EVENTS=true
+      - UP_UNIFI_CONTROLLER_0_SAVE_IDS=true
+      - UP_UNIFI_CONTROLLER_0_SAVE_SITES=true
+      - UP_UNIFI_CONTROLLER_0_URL=https://x.x.x.x
+      - UP_UNIFI_CONTROLLER_0_USER=Prometheus
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge
