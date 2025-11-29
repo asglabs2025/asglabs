@@ -25,7 +25,8 @@ ansible-pub/
 
 1. Install Ansible on your local machine.  
 2. Update your inventory file (`inventory/hosts.ini`) with the target hosts.  
-3. Run a playbook using:
+3. Define your SSH key either at a global level (ansible.cfg), per playbook, or per-host in the inventory file.
+4. Run a playbook using:
 
 ```
 ansible-playbook -i inventory/hosts.ini playbooks/ubuntu.yml
